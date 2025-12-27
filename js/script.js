@@ -4,6 +4,7 @@ const GEO_URL = "https://api.openweathermap.org/geo/1.0/direct";
 
 const citySelect = document.getElementById("citySelect");
 const refreshBtn = document.getElementById("refreshBtn");
+const addCityToggle = document.getElementById("addCityToggle");
 
 const loadingEl = document.getElementById("loading");
 const errorEl = document.getElementById("error");
@@ -38,9 +39,7 @@ function saveState() {
 
 function loadState() {
     const saved = localStorage.getItem("weatherAppState");
-    if (saved) {
-        state = JSON.parse(saved);
-    }
+    if (saved) state = JSON.parse(saved);
 }
 
 function showLoading() {
@@ -65,35 +64,38 @@ function updateCitySelect() {
     citySelect.innerHTML = "";
 
     if (state.current) {
-        const option = document.createElement("option");
-        option.value = "current";
-        option.textContent = "Текущее местоположение";
-        citySelect.appendChild(option);
+        const opt = document.createElement("option");
+        opt.value = "current";
+        opt.textContent = "Текущее местоположение";
+        citySelect.appendChild(opt);
     }
 
-    state.cities.forEach(city => {
-        const option = document.createElement("option");
-        option.value = city;
-        option.textContent = city;
-        citySelect.appendChild(option);
+    state.cities.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c;
+        opt.textContent = c;
+        citySelect.appendChild(opt);
     });
 
     citySelect.value = state.selected;
 }
 
-function formatDate(dateStr) {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("ru-RU", { weekday: "short", day: "numeric", month: "numeric" });
+function formatDate(d) {
+    return new Date(d).toLocaleDateString("ru-RU", {
+        weekday: "short",
+        day: "numeric",
+        month: "numeric"
+    });
 }
 
 function renderWeather(data, title) {
     locationTitle.textContent = title;
 
-    const today = data.list[0];
-    todayTemp.textContent = Math.round(today.main.temp) + "°C";
-    todayDesc.textContent = today.weather[0].description;
+    const now = data.list[0];
+    todayTemp.textContent = Math.round(now.main.temp) + "°C";
+    todayDesc.textContent = now.weather[0].description;
 
-    const days = data.list.filter(item => item.dt_txt.includes("12:00:00"));
+    const days = data.list.filter(i => i.dt_txt.includes("12:00:00"));
 
     day1Date.textContent = formatDate(days[0].dt_txt);
     day1Temp.textContent = Math.round(days[0].main.temp) + "°C";
@@ -108,10 +110,10 @@ function renderWeather(data, title) {
 async function fetchWeatherByCoords(lat, lon) {
     showLoading();
     try {
-        const res = await fetch(`${WEATHER_URL}?lat=${lat}&lon=${lon}&units=metric&lang=ru&appid=${API_KEY}`);
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        renderWeather(data, "Текущее местоположение");
+        const r = await fetch(`${WEATHER_URL}?lat=${lat}&lon=${lon}&units=metric&lang=ru&appid=${API_KEY}`);
+        if (!r.ok) throw new Error();
+        const d = await r.json();
+        renderWeather(d, "Текущее местоположение");
         showWeather();
     } catch {
         showError();
@@ -121,10 +123,10 @@ async function fetchWeatherByCoords(lat, lon) {
 async function fetchWeatherByCity(city) {
     showLoading();
     try {
-        const res = await fetch(`${WEATHER_URL}?q=${city}&units=metric&lang=ru&appid=${API_KEY}`);
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        renderWeather(data, city);
+        const r = await fetch(`${WEATHER_URL}?q=${city}&units=metric&lang=ru&appid=${API_KEY}`);
+        if (!r.ok) throw new Error();
+        const d = await r.json();
+        renderWeather(d, city);
         showWeather();
     } catch {
         showError();
@@ -132,18 +134,14 @@ async function fetchWeatherByCity(city) {
 }
 
 async function validateCity(name) {
-    const res = await fetch(`${GEO_URL}?q=${name}&limit=5&appid=${API_KEY}`);
-    const data = await res.json();
-    return data;
+    const r = await fetch(`${GEO_URL}?q=${name}&limit=5&appid=${API_KEY}`);
+    return await r.json();
 }
 
 function initGeolocation() {
     navigator.geolocation.getCurrentPosition(
-        pos => {
-            state.current = {
-                lat: pos.coords.latitude,
-                lon: pos.coords.longitude
-            };
+        p => {
+            state.current = { lat: p.coords.latitude, lon: p.coords.longitude };
             state.selected = "current";
             saveState();
             updateCitySelect();
@@ -158,7 +156,6 @@ function initGeolocation() {
 citySelect.addEventListener("change", () => {
     state.selected = citySelect.value;
     saveState();
-
     if (state.selected === "current") {
         fetchWeatherByCoords(state.current.lat, state.current.lon);
     } else {
@@ -174,18 +171,24 @@ refreshBtn.addEventListener("click", () => {
     }
 });
 
+addCityToggle.addEventListener("click", () => {
+    addCitySection.classList.toggle("hidden");
+    cityError.classList.add("hidden");
+    citySuggestions.classList.add("hidden");
+});
+
 cityInput.addEventListener("input", async () => {
-    const value = cityInput.value.trim();
+    const v = cityInput.value.trim();
     citySuggestions.innerHTML = "";
     cityError.classList.add("hidden");
 
-    if (value.length < 2) {
+    if (v.length < 2) {
         citySuggestions.classList.add("hidden");
         return;
     }
 
-    const cities = await validateCity(value);
-    if (cities.length === 0) {
+    const cities = await validateCity(v);
+    if (!cities.length) {
         citySuggestions.classList.add("hidden");
         return;
     }
@@ -193,10 +196,10 @@ cityInput.addEventListener("input", async () => {
     cities.forEach(c => {
         const li = document.createElement("li");
         li.textContent = c.name;
-        li.addEventListener("click", () => {
+        li.onclick = () => {
             cityInput.value = c.name;
             citySuggestions.classList.add("hidden");
-        });
+        };
         citySuggestions.appendChild(li);
     });
 
@@ -208,14 +211,12 @@ addCityBtn.addEventListener("click", async () => {
     if (!name) return;
 
     const cities = await validateCity(name);
-    if (cities.length === 0) {
+    if (!cities.length) {
         cityError.classList.remove("hidden");
         return;
     }
 
-    if (!state.cities.includes(name)) {
-        state.cities.push(name);
-    }
+    if (!state.cities.includes(name)) state.cities.push(name);
 
     state.selected = name;
     cityInput.value = "";
