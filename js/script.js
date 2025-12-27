@@ -149,20 +149,13 @@ class WeatherApp {
     // -------- Обновление всего --------
 
     async refreshAll() {
-        await this.loadWeatherForCurrent();
-
-        for (let i = 0; i < this.cities.length; i++) {
-            try {
-                const data = await this.fetchWeatherForecast({ name: this.cities[i].name });
-                this.cities[i].today = data.today;
-                this.cities[i].days = data.days;
-            } catch (e) {
-                console.error(e);
-            }
+        try {
+            await this.loadWeatherForCurrent();
+        } finally {
+            this.setMainStatus('success');
         }
-        this.saveCities();
-        this.renderCitiesList();
     }
+
 
     // -------- Работа с API --------
 
