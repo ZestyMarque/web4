@@ -3,13 +3,10 @@ class WeatherApp {
         // ТВОЙ КЛЮЧ
         this.API_KEY = 'f6aec960f0fcbdc574a2f22da749dd5c';
         this.baseUrl = 'https://api.openweathermap.org/data/2.5';
+
         this.cities = JSON.parse(localStorage.getItem('weatherCities')) || [];
         this.currentLocation = JSON.parse(localStorage.getItem('currentLocation')) || null;
-        this.citySuggestions = [
-            'Москва', 'Санкт-Петербург', 'Новосибирск', 'Екатеринбург', 'Казань',
-            'Нижний Новгород', 'Челябинск', 'Самара', 'Омск', 'Ростов-на-Дону',
-            'London', 'Paris', 'Berlin', 'Madrid', 'Rome', 'New York', 'Tokyo'
-        ];
+
         this.init();
     }
 
@@ -33,10 +30,10 @@ class WeatherApp {
         document.getElementById('cityInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.addCity();
         });
-        document.getElementById('cityInput').addEventListener('input', (e) => this.showSuggestions(e.target.value));
+        // НИКАКИХ showSuggestions здесь нет
     }
 
-    // ---------- ГЕОЛОКАЦИЯ / ПЕРВЫЙ ВХОД ----------
+    // -------- Геолокация / первый вход --------
 
     requestGeolocation() {
         const status = document.getElementById('mainStatus');
@@ -64,19 +61,23 @@ class WeatherApp {
     showManualCityInput() {
         document.getElementById('mainTitle').textContent = 'Введите город';
         document.getElementById('mainStatus').textContent = 'Ожидаем ввод города';
+
         const container = document.getElementById('mainContent');
         container.className = 'weather-content';
         container.innerHTML = `
-            <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.9);">
+            <div style="text-align:center;padding:40px;color:rgba(255,255,255,0.9);">
                 <input type="text" id="initialCityInput" placeholder="Например: Санкт-Петербург"
-                       style="padding: 12px 16px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.3); font-size: 1.05em; width: 80%; max-width: 350px; background: rgba(255,255,255,0.1); color: white;">
-                <br/><br/>
+                    style="padding:12px 16px;border-radius:12px;border:2px solid rgba(255,255,255,0.3);
+                    font-size:1.05em;width:80%;max-width:350px;background:rgba(255,255,255,0.1);color:white;">
+                <br><br>
                 <button id="initialCityBtn"
-                        style="background: linear-gradient(45deg,#ff6b6b,#feca57); color: white; border: none; padding: 10px 24px; border-radius: 12px; cursor: pointer; font-size: 1.05em;">
+                    style="background:linear-gradient(45deg,#ff6b6b,#feca57);color:white;border:none;
+                    padding:10px 24px;border-radius:12px;cursor:pointer;font-size:1.05em;">
                     Показать погоду
                 </button>
             </div>
         `;
+
         document.getElementById('initialCityBtn').addEventListener('click', () => this.addInitialCity());
     }
 
@@ -90,24 +91,23 @@ class WeatherApp {
         await this.loadWeatherForCurrent();
     }
 
-    // ---------- ЗАГРУЗКА ПОГОДЫ ДЛЯ ТЕКУЩЕГО МЕСТА ----------
+    // -------- Текущее местоположение --------
 
     async loadWeatherForCurrent() {
         this.setMainStatus('loading');
-
         try {
             const data = await this.fetchWeatherForecast(this.currentLocation);
-            // сохраняем название города из API, чтобы всегда показывать его
             this.currentLocation.cityName = data.city;
             localStorage.setItem('currentLocation', JSON.stringify(this.currentLocation));
             this.renderMainForecast(data);
             this.setMainStatus('success');
-        } catch {
+        } catch (e) {
+            console.error(e);
             this.setMainStatus('error');
         }
     }
 
-    // ---------- ДОБАВЛЕНИЕ / УДАЛЕНИЕ ГОРОДОВ ----------
+    // -------- Добавление / удаление городов --------
 
     async addCity() {
         const input = document.getElementById('cityInput');
@@ -127,17 +127,14 @@ class WeatherApp {
 
         try {
             const data = await this.fetchWeatherForecast({ name });
-            const cityData = {
-                name: data.city,
-                today: data.today,
-                days: data.days
-            };
+            const cityData = { name: data.city, today: data.today, days: data.days };
             this.cities.push(cityData);
             this.saveCities();
             input.value = '';
             this.renderCitiesList();
             this.setCityInputStatus('success');
-        } catch {
+        } catch (e) {
+            console.error(e);
             this.showCityError('Город не найден. Проверьте написание.');
             this.setCityInputStatus('error');
         }
@@ -149,7 +146,7 @@ class WeatherApp {
         this.renderCitiesList();
     }
 
-    // ---------- ОБНОВЛЕНИЕ ВСЕГО ----------
+    // -------- Обновление всего --------
 
     async refreshAll() {
         await this.loadWeatherForCurrent();
@@ -159,15 +156,15 @@ class WeatherApp {
                 const data = await this.fetchWeatherForecast({ name: this.cities[i].name });
                 this.cities[i].today = data.today;
                 this.cities[i].days = data.days;
-            } catch {
-                // просто пропускаем город, если ошибка
+            } catch (e) {
+                console.error(e);
             }
         }
         this.saveCities();
         this.renderCitiesList();
     }
 
-    // ---------- РАБОТА С API ----------
+    // -------- Работа с API --------
 
     async fetchWeatherForecast(location) {
         let url;
@@ -178,14 +175,10 @@ class WeatherApp {
         }
 
         const res = await fetch(url);
-        if (!res.ok) {
-            throw new Error('API error');
-        }
-        const data = await res.json(); // формат OpenWeatherMap forecast [web:9]
+        if (!res.ok) throw new Error('API error');
 
-        if (!data.list || data.list.length === 0) {
-            throw new Error('No data');
-        }
+        const data = await res.json(); // формат OpenWeatherMap 5‑дневного прогноза [web:9]
+        if (!data.list || data.list.length === 0) throw new Error('Empty data');
 
         return this.parseForecastData(data);
     }
@@ -201,38 +194,30 @@ class WeatherApp {
         apiData.list.forEach(item => {
             const dateStr = item.dt_txt.split(' ')[0];
             if (!days[dateStr]) {
-                days[dateStr] = {
-                    date: dateStr,
-                    temps: [],
-                    descriptions: [],
-                    icons: []
-                };
+                days[dateStr] = { date: dateStr, temps: [], descriptions: [] };
             }
             days[dateStr].temps.push(item.main.temp);
             days[dateStr].descriptions.push(item.weather[0].description);
-            days[dateStr].icons.push(item.weather[0].icon);
         });
 
         const daysArray = Object.values(days).map(d => ({
             date: d.date,
             temp_min: Math.round(Math.min(...d.temps)),
             temp_max: Math.round(Math.max(...d.temps)),
-            description: d.descriptions[0],
-            icon: d.icons[0]
+            description: d.descriptions[0]
         }));
 
         return {
             city,
             today: {
                 temp: Math.round(todayItem.main.temp),
-                description: todayItem.weather[0].description,
-                icon: todayItem.weather[0].icon
+                description: todayItem.weather[0].description
             },
             days: daysArray.slice(1, 3)
         };
     }
 
-    // ---------- РЕНДЕР ----------
+    // -------- Рендер --------
 
     renderMainForecast(data) {
         const titleEl = document.getElementById('mainTitle');
@@ -250,12 +235,12 @@ class WeatherApp {
                 </div>
                 ${data.days
                     .map(
-                        day => `
+                        d => `
                     <div class="forecast-day">
                         <div class="day-icon">❄️</div>
-                        <div class="temp">${day.temp_min}° / ${day.temp_max}°</div>
-                        <div class="description">${day.description}</div>
-                        <div class="date">${this.formatDate(day.date)}</div>
+                        <div class="temp">${d.temp_min}° / ${d.temp_max}°</div>
+                        <div class="description">${d.description}</div>
+                        <div class="date">${this.formatDate(d.date)}</div>
                     </div>`
                     )
                     .join('')}
@@ -268,7 +253,7 @@ class WeatherApp {
 
         if (this.cities.length === 0) {
             container.innerHTML =
-                '<p style="text-align: center; color: rgba(255,255,255,0.7);">Добавьте города для просмотра прогноза</p>';
+                '<p style="text-align:center;color:rgba(255,255,255,0.7);">Добавьте города для просмотра прогноза</p>';
             return;
         }
 
@@ -299,12 +284,12 @@ class WeatherApp {
                         </div>
                         ${city.days
                             ?.map(
-                                day => `
+                                d => `
                             <div class="forecast-day">
                                 <div class="day-icon">❄️</div>
-                                <div class="temp">${day.temp_min}° / ${day.temp_max}°</div>
-                                <div class="description">${day.description}</div>
-                                <div class="date">${this.formatDate(day.date)}</div>
+                                <div class="temp">${d.temp_min}° / ${d.temp_max}°</div>
+                                <div class="description">${d.description}</div>
+                                <div class="date">${this.formatDate(d.date)}</div>
                             </div>`
                             )
                             .join('') || ''}
@@ -321,7 +306,6 @@ class WeatherApp {
             </div>
         `;
 
-        // переключение вкладок
         document.querySelectorAll('.city-tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 const index = Number(tab.dataset.index);
@@ -332,7 +316,6 @@ class WeatherApp {
             });
         });
 
-        // удаление города
         document.querySelectorAll('.delete-city-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const index = Number(btn.dataset.index);
@@ -341,7 +324,7 @@ class WeatherApp {
         });
     }
 
-    // ---------- СТАТУСЫ / ВСПОМОГАТЕЛЬНОЕ ----------
+    // -------- Вспомогательные --------
 
     setMainStatus(status) {
         const statusEl = document.getElementById('mainStatus');
@@ -377,6 +360,8 @@ class WeatherApp {
         } else if (status === 'success') {
             el.textContent = '✅ Город добавлен';
             setTimeout(() => el.classList.add('hidden'), 1500);
+        } else if (status === 'error') {
+            // сообщение об ошибке уже выставлено в showCityError
         }
     }
 
