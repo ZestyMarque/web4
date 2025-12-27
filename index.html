@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Прогноз погоды</title>
+    <title>🎄 Новогодний прогноз погоды</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🌤️ Прогноз погоды</h1>
+            <h1>🎄 Новогодний прогноз погоды</h1>
             <button id="refreshBtn" class="refresh-btn">🔄 Обновить</button>
         </header>
 
@@ -17,29 +17,43 @@
             <!-- Основной прогноз (геолокация или первый город) -->
             <section id="mainWeather" class="weather-section">
                 <div class="weather-header">
-                    <h2 id="mainTitle">Текущее местоположение</h2>
-                    <span id="mainStatus" class="status">Загрузка...</span>
+                    <h2 id="mainTitle">Определяем местоположение...</h2>
+                    <span id="mainStatus" class="status loading">⏳ Загрузка...</span>
                 </div>
-                <div id="mainContent" class="weather-content loading"></div>
+                <div id="mainContent" class="weather-content loading">
+                    🎄⏳ Загружаем новогодний прогноз...
+                </div>
             </section>
 
             <!-- Форма добавления города -->
             <section class="add-city-section">
-                <h3>Добавить город</h3>
+                <h3>✨ Добавить город</h3>
                 <div class="city-input-container">
-                    <input type="text" id="cityInput" placeholder="Введите название города" list="citySuggestions">
+                    <input type="text" id="cityInput" placeholder="Введите название города (Москва, Paris...)" list="citySuggestions">
                     <datalist id="citySuggestions"></datalist>
-                    <button id="addCityBtn">Добавить</button>
+                    <button id="addCityBtn">➕ Добавить</button>
                     <div id="cityError" class="error hidden"></div>
                 </div>
             </section>
 
             <!-- Дополнительные города -->
             <section id="additionalCities" class="additional-cities">
-                <h3>Другие города</h3>
-                <div id="citiesList"></div>
+                <h3>🌍 Другие города</h3>
+                <div id="citiesList">
+                    <p style="text-align: center; color: rgba(255,255,255,0.7);">Добавьте города для просмотра прогноза</p>
+                </div>
             </section>
         </main>
+
+        <!-- Новогодние снежинки -->
+        <div class="snowflakes" aria-hidden="true">
+            <div class="snowflake">❄️</div>
+            <div class="snowflake">❄️</div>
+            <div class="snowflake">❄️</div>
+            <div class="snowflake">❄️</div>
+            <div class="snowflake">❄️</div>
+            <div class="snowflake">❄️</div>
+        </div>
     </div>
 
     <script src="js/script.js"></script>
