@@ -1,4 +1,3 @@
-// API ключ (замените на свой)
 const API_KEY = 'f6aec960f0fcbdc574a2f22da749dd5c';
 const API_BASE = 'https://api.openweathermap.org/data/2.5/forecast';
 
@@ -37,6 +36,9 @@ window.addEventListener('load', () => {
             },
             () => {
                 showCityForm();
+                if (!currentCity) {
+                    // Если нет текущего города, показать форму
+                }
             }
         );
     } else {
@@ -51,7 +53,7 @@ function showCityForm() {
 
 // Автокомплит для городов
 cityInput.addEventListener('input', () => {
-    const query = cityInput.value.toLowerCase();
+    const query = cityInput.value.toLowerCase().trim();
     citySuggestions.innerHTML = '';
     if (query) {
         const filtered = cities.filter(city => city.toLowerCase().includes(query));
@@ -73,6 +75,11 @@ cityInput.addEventListener('input', () => {
 // Добавление города
 addCityBtn.addEventListener('click', () => {
     const city = cityInput.value.trim();
+    if (!city) {
+        cityError.textContent = 'Введите название города.';
+        cityError.classList.remove('hidden');
+        return;
+    }
     if (cities.includes(city) && !citiesArray.includes(city)) {
         citiesArray.push(city);
         saveToStorage();
@@ -106,22 +113,41 @@ function renderCities() {
 function setCurrentCity(city) {
     currentCity = city;
     renderCities();
-    fetchWeather(city);
+    if (city === 'Текущее местоположение') {
+        // Для геолокации заново запрашиваем координаты
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    fetchWeatherByCoords(latitude, longitude, 'Текущее местоположение');
+                },
+                () => showError('Геолокация недоступна. Добавьте город вручную.')
+            );
+        } else {
+            showError('Геолокация не поддерживается браузером.');
+        }
+    } else {
+        fetchWeather(city);
+    }
 }
 
 // Запрос погоды по городу
 function fetchWeather(city) {
+    if (!city) return;
     showLoading();
     fetch(`${API_BASE}?q=${city}&appid=${API_KEY}&units=metric&lang=ru`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) throw new Error('Ошибка API');
+            return response.json();
+        })
         .then(data => {
             if (data.cod === '200') {
                 displayWeather(data);
             } else {
-                showError('Ошибка загрузки погоды.');
+                throw new Error('Город не найден');
             }
         })
-        .catch(() => showError('Ошибка сети.'))
+        .catch(err => showError(`Ошибка: ${err.message}`))
         .finally(() => hideLoading());
 }
 
@@ -129,19 +155,24 @@ function fetchWeather(city) {
 function fetchWeatherByCoords(lat, lon, label) {
     showLoading();
     fetch(`${API_BASE}?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=ru`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) throw new Error('Ошибка API');
+            return response.json();
+        })
         .then(data => {
             if (data.cod === '200') {
                 currentCity = label;
-                citiesArray.unshift(label); // Добавляем в начало
+                if (!citiesArray.includes(label)) {
+                    citiesArray.unshift(label); // Добавляем в начало без дубликатов
+                }
                 saveToStorage();
                 renderCities();
                 displayWeather(data);
             } else {
-                showError('Ошибка загрузки погоды.');
+                throw new Error('Погода не найдена');
             }
         })
-        .catch(() => showError('Ошибка сети.'))
+        .catch(err => showError(`Ошибка: ${err.message}`))
         .finally(() => hideLoading());
 }
 
@@ -158,7 +189,12 @@ function displayWeather(data) {
         days[date].temps.push(item.main.temp);
     });
     
-    const dayKeys = Object.keys(days).slice(0, 3);
+    const dayKeys = Object.keys(days).slice(0, 3); // Сегодня + 2 дня
+    if (dayKeys.length < 3) {
+        showError('Недостаточно данных для прогноза.');
+        return;
+    }
+    
     weatherData.innerHTML = dayKeys.map(key => {
         const day = days[key];
         const avgTemp = (day.temps.reduce((a, b) => a + b) / day.temps.length).toFixed(1);
@@ -166,7 +202,7 @@ function displayWeather(data) {
         return `
             <div class="day">
                 <h3>${new Date(key).toLocaleDateString('ru-RU', { weekday: 'long' })}</h3>
-                <img src="${icon}" alt="${day.desc}">
+                <img src="${icon}" alt="${day.desc}" style="width: 50px; height: 50px;">
                 <p>${avgTemp}°C</p>
                 <p>${day.desc}</p>
             </div>
@@ -197,17 +233,9 @@ function showError(msg) {
 // Обновление
 refreshBtn.addEventListener('click', () => {
     if (currentCity) {
-        if (currentCity === 'Текущее местоположение') {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const { latitude, longitude } = position.coords;
-                    fetchWeatherByCoords(latitude, longitude, 'Текущее местоположение');
-                },
-                () => showError('Геолокация недоступна.')
-            );
-        } else {
-            fetchWeather(currentCity);
-        }
+        setCurrentCity(currentCity); // Повторно вызывает логику для текущего города
+    } else {
+        showError('Выберите город.');
     }
 });
 
@@ -226,5 +254,7 @@ function loadFromStorage() {
     }
     if (savedCurrent) {
         currentCity = savedCurrent;
+        // Автоматически загружаем погоду для сохраненного города
+        setCurrentCity(savedCurrent);
     }
 }
