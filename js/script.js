@@ -1,6 +1,6 @@
 class WeatherApp {
     constructor() {
-        // ТВОЙ КЛЮЧ
+        // ТВОЙ КЛЮЧ OpenWeatherMap
         this.API_KEY = 'f6aec960f0fcbdc574a2f22da749dd5c';
         this.baseUrl = 'https://api.openweathermap.org/data/2.5';
 
@@ -9,6 +9,8 @@ class WeatherApp {
 
         this.init();
     }
+
+    // ---------- ИНИЦИАЛИЗАЦИЯ ----------
 
     init() {
         this.bindEvents();
@@ -30,14 +32,14 @@ class WeatherApp {
         document.getElementById('cityInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.addCity();
         });
-        // НИКАКИХ showSuggestions здесь нет
     }
 
-    // -------- Геолокация / первый вход --------
+    // ---------- ГЕОЛОКАЦИЯ / ПЕРВЫЙ ВХОД ----------
 
     requestGeolocation() {
         const status = document.getElementById('mainStatus');
         status.textContent = '⏳ Запрашиваем геолокацию...';
+        status.className = 'status loading';
 
         if (!navigator.geolocation) {
             this.showManualCityInput();
@@ -60,7 +62,9 @@ class WeatherApp {
 
     showManualCityInput() {
         document.getElementById('mainTitle').textContent = 'Введите город';
-        document.getElementById('mainStatus').textContent = 'Ожидаем ввод города';
+        const status = document.getElementById('mainStatus');
+        status.textContent = 'Ожидаем ввод города';
+        status.className = 'status';
 
         const container = document.getElementById('mainContent');
         container.className = 'weather-content';
@@ -91,7 +95,7 @@ class WeatherApp {
         await this.loadWeatherForCurrent();
     }
 
-    // -------- Текущее местоположение --------
+    // ---------- ТЕКУЩЕЕ МЕСТОПОЛОЖЕНИЕ ----------
 
     async loadWeatherForCurrent() {
         this.setMainStatus('loading');
@@ -102,12 +106,12 @@ class WeatherApp {
             this.renderMainForecast(data);
             this.setMainStatus('success');
         } catch (e) {
-            console.error(e);
+            console.error('loadWeatherForCurrent error:', e);
             this.setMainStatus('error');
         }
     }
 
-    // -------- Добавление / удаление городов --------
+    // ---------- ГОРОДА: ДОБАВЛЕНИЕ / УДАЛЕНИЕ ----------
 
     async addCity() {
         const input = document.getElementById('cityInput');
@@ -134,8 +138,8 @@ class WeatherApp {
             this.renderCitiesList();
             this.setCityInputStatus('success');
         } catch (e) {
-            console.error(e);
-            this.showCityError('Город не найден. Проверьте написание.');
+            console.error('addCity error:', e);
+            this.showCityError('Город не найден или произошла ошибка. Попробуйте ещё раз.');
             this.setCityInputStatus('error');
         }
     }
@@ -146,32 +150,54 @@ class WeatherApp {
         this.renderCitiesList();
     }
 
-    // -------- Обновление всего --------
+    // ---------- ОБНОВЛЕНИЕ ВСЕГО ----------
 
     async refreshAll() {
+        this.setMainStatus('loading');
         try {
             await this.loadWeatherForCurrent();
+
+            for (let i = 0; i < this.cities.length; i++) {
+                try {
+                    const data = await this.fetchWeatherForecast({ name: this.cities[i].name });
+                    this.cities[i].today = data.today;
+                    this.cities[i].days = data.days;
+                } catch (e) {
+                    console.error('refresh city error:', this.cities[i].name, e);
+                }
+            }
+            this.saveCities();
+            this.renderCitiesList();
         } finally {
+            // Даже если были ошибки по отдельным городам, главный статус меняем
             this.setMainStatus('success');
         }
     }
 
-
-    // -------- Работа с API --------
+    // ---------- РАБОТА С API ----------
 
     async fetchWeatherForecast(location) {
         let url;
         if (location.lat !== undefined && location.lon !== undefined) {
-            url = `${this.baseUrl}/forecast?lat=${location.lat}&lon=${location.lon}&units=metric&lang=ru&appid=${this.API_KEY}`;
+            url =
+                `${this.baseUrl}/forecast?lat=${location.lat}&lon=${location.lon}` +
+                `&units=metric&lang=ru&appid=${this.API_KEY}`;
         } else {
-            url = `${this.baseUrl}/forecast?q=${encodeURIComponent(location.name)}&units=metric&lang=ru&appid=${this.API_KEY}`;
+            url =
+                `${this.baseUrl}/forecast?q=${encodeURIComponent(location.name)}` +
+                `&units=metric&lang=ru&appid=${this.API_KEY}`;
         }
 
         const res = await fetch(url);
-        if (!res.ok) throw new Error('API error');
+        if (!res.ok) {
+            // OpenWeather при неверном городе возвращает 404 и JSON с полем cod / message [web:27][web:9]
+            throw new Error(`API error: ${res.status}`);
+        }
 
-        const data = await res.json(); // формат OpenWeatherMap 5‑дневного прогноза [web:9]
-        if (!data.list || data.list.length === 0) throw new Error('Empty data');
+        const data = await res.json();
+        if (!data.list || data.list.length === 0) {
+            throw new Error('Empty data from API');
+        }
 
         return this.parseForecastData(data);
     }
@@ -206,11 +232,11 @@ class WeatherApp {
                 temp: Math.round(todayItem.main.temp),
                 description: todayItem.weather[0].description
             },
-            days: daysArray.slice(1, 3)
+            days: daysArray.slice(1, 3) // Следующие два дня
         };
     }
 
-    // -------- Рендер --------
+    // ---------- РЕНДЕР ----------
 
     renderMainForecast(data) {
         const titleEl = document.getElementById('mainTitle');
@@ -299,16 +325,20 @@ class WeatherApp {
             </div>
         `;
 
+        // переключение вкладок
         document.querySelectorAll('.city-tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 const index = Number(tab.dataset.index);
                 document.querySelectorAll('.city-tab').forEach(t => t.classList.remove('active'));
                 document.querySelectorAll('.city-forecast').forEach(f => f.classList.add('hidden'));
                 tab.classList.add('active');
-                document.querySelector(`.city-forecast[data-city="${index}"]`).classList.remove('hidden');
+                document
+                    .querySelector(`.city-forecast[data-city="${index}"]`)
+                    .classList.remove('hidden');
             });
         });
 
+        // удаление городов
         document.querySelectorAll('.delete-city-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const index = Number(btn.dataset.index);
@@ -317,25 +347,24 @@ class WeatherApp {
         });
     }
 
-    // -------- Вспомогательные --------
+    // ---------- СТАТУСЫ / ВСПОМОГАТЕЛЬНЫЕ ----------
 
     setMainStatus(status) {
         const statusEl = document.getElementById('mainStatus');
         const contentEl = document.getElementById('mainContent');
 
         if (status === 'loading') {
-            statusEl.textContent = '⏳ Загрузка...';
+            statusEl.textContent = '🎄 ⏳ Загружаем прогноз...';
             statusEl.className = 'status loading';
             contentEl.className = 'weather-content loading';
         } else if (status === 'success') {
             statusEl.textContent = '✨ Готово';
             statusEl.className = 'status success';
             contentEl.className = 'weather-content';
-        } else {
+        } else if (status === 'error') {
             statusEl.textContent = '❌ Ошибка';
             statusEl.className = 'status error';
             contentEl.className = 'weather-content error';
-            contentEl.innerHTML = 'Не удалось загрузить прогноз. Проверьте интернет или ключ API.';
         }
     }
 
@@ -354,7 +383,7 @@ class WeatherApp {
             el.textContent = '✅ Город добавлен';
             setTimeout(() => el.classList.add('hidden'), 1500);
         } else if (status === 'error') {
-            // сообщение об ошибке уже выставлено в showCityError
+            // сообщение уже задано в showCityError
         }
     }
 
@@ -369,5 +398,6 @@ class WeatherApp {
     }
 }
 
+// запуск приложения
 const app = new WeatherApp();
 window.app = app;
