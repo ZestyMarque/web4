@@ -1,235 +1,146 @@
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: Arial, Helvetica, sans-serif;
-}
-
+/* Общие стили */
 body {
-    background-color: #f2f4f7;
-    color: #1f2933;
-    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    background-color: #f0f8ff;
+    color: #333;
+    margin: 0;
+    padding: 20px;
     display: flex;
     justify-content: center;
-    align-items: flex-start;
+    align-items: center;
+    min-height: 100vh;
 }
 
-.app {
+.container {
+    max-width: 800px;
     width: 100%;
-    max-width: 900px;
-    background-color: #ffffff;
-    margin: 20px;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-    overflow: hidden;
-}
-
-.app-header {
+    background-color: #fff;
     padding: 20px;
-    border-bottom: 1px solid #e5e7eb;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-.app-title {
-    font-size: 24px;
-    font-weight: 600;
+h1 {
+    text-align: center;
+    color: #4a90e2;
 }
 
-.location-controls {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
+/* Форма города */
+#city-form {
+    margin-bottom: 20px;
 }
 
-.city-select {
-    flex: 1;
-    min-width: 200px;
+#city-input {
+    width: 100%;
     padding: 10px;
-    border-radius: 6px;
-    border: 1px solid #d1d5db;
+    border: 1px solid #ccc;
+    border-radius: 5px;
     font-size: 16px;
-    background-color: #ffffff;
 }
 
-.refresh-btn {
-    padding: 10px 16px;
-    border-radius: 6px;
-    border: none;
-    background-color: #2563eb;
-    color: #ffffff;
-    font-size: 16px;
+#city-suggestions {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border: 1px solid #ccc;
+    border-top: none;
+    max-height: 150px;
+    overflow-y: auto;
+    background-color: #fff;
+}
+
+#city-suggestions li {
+    padding: 10px;
     cursor: pointer;
 }
 
-.refresh-btn:hover {
-    background-color: #1d4ed8;
+#city-suggestions li:hover {
+    background-color: #f0f0f0;
 }
 
-.app-content {
-    padding: 20px;
+button {
+    background-color: #4a90e2;
+    color: #fff;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 10px;
 }
 
-.state {
-    padding: 20px;
+button:hover {
+    background-color: #357abd;
+}
+
+.error {
+    color: #e74c3c;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+/* Список городов */
+#cities-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.city-btn {
+    background-color: #e0e0e0;
+    color: #333;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.city-btn.active {
+    background-color: #4a90e2;
+    color: #fff;
+}
+
+/* Погода */
+#weather-container {
     text-align: center;
-    font-size: 18px;
 }
 
-.state-loading {
-    color: #2563eb;
+.day {
+    display: inline-block;
+    margin: 10px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    min-width: 150px;
 }
 
-.state-error {
-    color: #dc2626;
+.day h3 {
+    margin: 0;
+    color: #4a90e2;
 }
 
+.day p {
+    margin: 5px 0;
+}
+
+/* Скрытые элементы */
 .hidden {
     display: none;
 }
 
-.weather {
-    display: flex;
-    flex-direction: column;
-    gap: 25px;
-}
-
-.weather-today {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.weather-today h2 {
-    font-size: 20px;
-    font-weight: 500;
-}
-
-.today-info {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-.temperature {
-    font-size: 48px;
-    font-weight: 600;
-}
-
-.description {
-    font-size: 18px;
-    color: #4b5563;
-}
-
-.weather-forecast {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
-}
-
-.forecast-day {
-    background-color: #f9fafb;
-    border-radius: 10px;
-    padding: 15px;
-    text-align: center;
-    border: 1px solid #e5e7eb;
-}
-
-.forecast-date {
-    font-size: 16px;
-    margin-bottom: 8px;
-    color: #374151;
-}
-
-.forecast-temp {
-    font-size: 22px;
-    font-weight: 500;
-}
-
-.add-city {
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid #e5e7eb;
-}
-
-.add-city h2 {
-    font-size: 20px;
-    margin-bottom: 15px;
-}
-
-.form-group {
-    position: relative;
-    max-width: 400px;
-}
-
-.form-group input {
-    width: 100%;
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid #d1d5db;
-    font-size: 16px;
-}
-
-.suggestions {
-    position: absolute;
-    top: 42px;
-    left: 0;
-    right: 0;
-    background-color: #ffffff;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    list-style: none;
-    max-height: 180px;
-    overflow-y: auto;
-    z-index: 10;
-}
-
-.suggestions li {
-    padding: 8px 10px;
-    cursor: pointer;
-}
-
-.suggestions li:hover {
-    background-color: #f3f4f6;
-}
-
-.input-error {
-    margin-top: 8px;
-    font-size: 14px;
-    color: #dc2626;
-}
-
-.add-city-btn {
-    margin-top: 15px;
-    padding: 10px 18px;
-    border-radius: 6px;
-    border: none;
-    background-color: #16a34a;
-    color: #ffffff;
-    font-size: 16px;
-    cursor: pointer;
-}
-
-.add-city-btn:hover {
-    background-color: #15803d;
-}
-
-@media (max-width: 768px) {
-    .today-info {
-        flex-direction: column;
-        align-items: flex-start;
+/* Адаптивность */
+@media (max-width: 600px) {
+    .container {
+        padding: 10px;
     }
-
-    .weather-forecast {
-        grid-template-columns: 1fr;
+    
+    .day {
+        display: block;
+        margin: 10px 0;
     }
-
-    .location-controls {
-        flex-direction: column;
-    }
-
-    .refresh-btn {
-        width: 100%;
+    
+    #cities-list {
+        justify-content: center;
     }
 }
