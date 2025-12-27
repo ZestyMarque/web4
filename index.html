@@ -8,30 +8,40 @@
 </head>
 <body>
     <div class="container">
-        <h1>Прогноз погоды</h1>
-        
-        <!-- Форма добавления города (показывается при отказе гео или для добавления) -->
-        <div id="city-form" class="hidden">
-            <input type="text" id="city-input" placeholder="Введите город" autocomplete="off">
-            <ul id="city-suggestions" class="hidden"></ul>
-            <button id="add-city-btn">Добавить город</button>
-            <div id="city-error" class="error hidden"></div>
-        </div>
-        
-        <!-- Список городов -->
-        <div id="cities-list"></div>
-        
-        <!-- Кнопка обновить -->
-        <button id="refresh-btn">Обновить</button>
-        
-        <!-- Контейнер погоды -->
-        <div id="weather-container">
-            <div id="loading" class="hidden">Загрузка...</div>
-            <div id="error" class="error hidden"></div>
-            <div id="weather-data" class="hidden"></div>
-        </div>
+        <header>
+            <h1>🌤️ Прогноз погоды</h1>
+            <button id="refreshBtn" class="refresh-btn">🔄 Обновить</button>
+        </header>
+
+        <main>
+            <!-- Основной прогноз (геолокация или первый город) -->
+            <section id="mainWeather" class="weather-section">
+                <div class="weather-header">
+                    <h2 id="mainTitle">Текущее местоположение</h2>
+                    <span id="mainStatus" class="status">Загрузка...</span>
+                </div>
+                <div id="mainContent" class="weather-content loading"></div>
+            </section>
+
+            <!-- Форма добавления города -->
+            <section class="add-city-section">
+                <h3>Добавить город</h3>
+                <div class="city-input-container">
+                    <input type="text" id="cityInput" placeholder="Введите название города" list="citySuggestions">
+                    <datalist id="citySuggestions"></datalist>
+                    <button id="addCityBtn">Добавить</button>
+                    <div id="cityError" class="error hidden"></div>
+                </div>
+            </section>
+
+            <!-- Дополнительные города -->
+            <section id="additionalCities" class="additional-cities">
+                <h3>Другие города</h3>
+                <div id="citiesList"></div>
+            </section>
+        </main>
     </div>
-    
+
     <script src="js/script.js"></script>
 </body>
 </html>
