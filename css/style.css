@@ -154,7 +154,7 @@ h1 {
 }
 
 .weather-content.loading::before {
-    content: "🎄⏳ Загружаем новогодний прогноз...";
+    content: "🎄⏳ Загружаем прогноз...";
     display: block;
     text-align: center;
     padding: 40px;
