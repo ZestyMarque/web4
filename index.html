@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Прогноз погоды</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="app">
+
+        <header class="app-header">
+            <h1 class="app-title">Прогноз погоды</h1>
+
+            <div class="location-controls">
+                <select id="citySelect" class="city-select">
+                </select>
+
+                <button id="refreshBtn" class="refresh-btn">
+                    Обновить
+                </button>
+            </div>
+        </header>
+
+        <main class="app-content">
+
+            <div id="loading" class="state state-loading hidden">
+                Загрузка данных...
+            </div>
+
+            <div id="error" class="state state-error hidden">
+                Произошла ошибка при получении данных
+            </div>
+
+            <section id="weather" class="weather hidden">
+
+                <div class="weather-today">
+                    <h2 id="locationTitle">Текущее местоположение</h2>
+                    <div class="today-info">
+                        <div class="temperature" id="todayTemp">--°C</div>
+                        <div class="description" id="todayDesc">---</div>
+                    </div>
+                </div>
+
+                <div class="weather-forecast">
+                    <div class="forecast-day">
+                        <div class="forecast-date" id="day1Date">---</div>
+                        <div class="forecast-temp" id="day1Temp">--°C</div>
+                    </div>
+
+                    <div class="forecast-day">
+                        <div class="forecast-date" id="day2Date">---</div>
+                        <div class="forecast-temp" id="day2Temp">--°C</div>
+                    </div>
+
+                    <div class="forecast-day">
+                        <div class="forecast-date" id="day3Date">---</div>
+                        <div class="forecast-temp" id="day3Temp">--°C</div>
+                    </div>
+                </div>
+
+            </section>
+
+            <section id="addCitySection" class="add-city hidden">
+                <h2>Добавить город</h2>
+
+                <div class="form-group">
+                    <input
+                        type="text"
+                        id="cityInput"
+                        placeholder="Введите название города"
+                        autocomplete="off"
+                    >
+
+                    <ul id="citySuggestions" class="suggestions hidden">
+                    </ul>
+
+                    <div id="cityError" class="input-error hidden">
+                        Город не найден
+                    </div>
+                </div>
+
+                <button id="addCityBtn" class="add-city-btn">
+                    Добавить
+                </button>
+            </section>
+
+        </main>
+
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
