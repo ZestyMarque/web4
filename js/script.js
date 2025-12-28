@@ -6,6 +6,14 @@ class WeatherApp {
 
         this.cities = JSON.parse(localStorage.getItem('weatherCities')) || [];
         this.currentLocation = JSON.parse(localStorage.getItem('currentLocation')) || null;
+        
+        // ✅ СПИСОК ГОРОДОВ ДЛЯ АВТОПОДБОРКИ (для задания)
+        this.citySuggestions = [
+            'Москва', 'Санкт-Петербург', 'Новосибирск', 'Екатеринбург', 'Казань',
+            'Нижний Новгород', 'Челябинск', 'Самара', 'Омск', 'Ростов-на-Дону',
+            'Красноярск', 'Воронеж', 'Пермь', 'Волгоград', 'Краснодар',
+            'London', 'Paris', 'Berlin', 'Madrid', 'Rome', 'New York', 'Tokyo'
+        ];
 
         this.init();
     }
@@ -26,11 +34,36 @@ class WeatherApp {
         }
     }
 
+    // ✅ ОБНОВЛЁННЫЙ bindEvents С ПОДсказками
     bindEvents() {
         document.getElementById('refreshBtn').addEventListener('click', () => this.refreshAll());
         document.getElementById('addCityBtn').addEventListener('click', () => this.addCity());
         document.getElementById('cityInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.addCity();
+        });
+        
+        // ✅ ВЫПАДАЮЩИЙ СПИСОК при вводе
+        document.getElementById('cityInput').addEventListener('input', (e) => {
+            this.showSuggestions(e.target.value);
+        });
+    }
+
+    // ✅ НОВЫЙ МЕТОД - ПОДсказки городов
+    showSuggestions(query) {
+        const datalist = document.getElementById('citySuggestions');
+        datalist.innerHTML = ''; // очищаем предыдущие
+
+        if (!query || query.length < 2) return;
+
+        // фильтруем города из списка
+        const filtered = this.citySuggestions
+            .filter(city => city.toLowerCase().includes(query.toLowerCase()))
+            .slice(0, 6); // максимум 6 подсказок
+
+        filtered.forEach(city => {
+            const option = document.createElement('option');
+            option.value = city;
+            datalist.appendChild(option);
         });
     }
 
@@ -179,18 +212,13 @@ class WeatherApp {
     async fetchWeatherForecast(location) {
         let url;
         if (location.lat !== undefined && location.lon !== undefined) {
-            url =
-                `${this.baseUrl}/forecast?lat=${location.lat}&lon=${location.lon}` +
-                `&units=metric&lang=ru&appid=${this.API_KEY}`;
+            url = `${this.baseUrl}/forecast?lat=${location.lat}&lon=${location.lon}&units=metric&lang=ru&appid=${this.API_KEY}`;
         } else {
-            url =
-                `${this.baseUrl}/forecast?q=${encodeURIComponent(location.name)}` +
-                `&units=metric&lang=ru&appid=${this.API_KEY}`;
+            url = `${this.baseUrl}/forecast?q=${encodeURIComponent(location.name)}&units=metric&lang=ru&appid=${this.API_KEY}`;
         }
 
         const res = await fetch(url);
         if (!res.ok) {
-            // OpenWeather при неверном городе возвращает 404 и JSON с полем cod / message [web:27][web:9]
             throw new Error(`API error: ${res.status}`);
         }
 
@@ -206,8 +234,7 @@ class WeatherApp {
         const city = apiData.city?.name || 'Неизвестный город';
 
         const now = Date.now() / 1000;
-        const todayItem =
-            apiData.list.find(item => Math.abs(item.dt - now) < 10800) || apiData.list[0];
+        const todayItem = apiData.list.find(item => Math.abs(item.dt - now) < 10800) || apiData.list[0];
 
         const days = {};
         apiData.list.forEach(item => {
@@ -232,7 +259,7 @@ class WeatherApp {
                 temp: Math.round(todayItem.main.temp),
                 description: todayItem.weather[0].description
             },
-            days: daysArray.slice(1, 3) // Следующие два дня
+            days: daysArray.slice(1, 3)
         };
     }
 
@@ -252,17 +279,13 @@ class WeatherApp {
                     <div class="description">${data.today.description}</div>
                     <div class="date">Сегодня</div>
                 </div>
-                ${data.days
-                    .map(
-                        d => `
+                ${data.days.map(d => `
                     <div class="forecast-day">
                         <div class="day-icon">❄️</div>
                         <div class="temp">${d.temp_min}° / ${d.temp_max}°</div>
                         <div class="description">${d.description}</div>
                         <div class="date">${this.formatDate(d.date)}</div>
-                    </div>`
-                    )
-                    .join('')}
+                    </div>`).join('')}
             </div>
         `;
     }
@@ -271,23 +294,16 @@ class WeatherApp {
         const container = document.getElementById('citiesList');
 
         if (this.cities.length === 0) {
-            container.innerHTML =
-                '<p style="text-align:center;color:rgba(255,255,255,0.7);">Добавьте города для просмотра прогноза</p>';
+            container.innerHTML = '<p style="text-align:center;color:rgba(255,255,255,0.7);">Добавьте города для просмотра прогноза</p>';
             return;
         }
 
-        const tabsHtml = this.cities
-            .map(
-                (city, i) => `
+        const tabsHtml = this.cities.map((city, i) => `
             <button class="city-tab ${i === 0 ? 'active' : ''}" data-index="${i}">
                 ${city.name}
-            </button>`
-            )
-            .join('');
+            </button>`).join('');
 
-        const forecastsHtml = this.cities
-            .map(
-                (city, i) => `
+        const forecastsHtml = this.cities.map((city, i) => `
             <div class="city-forecast ${i === 0 ? '' : 'hidden'}" data-city="${i}">
                 <div class="weather-header">
                     <h2>${city.name}</h2>
@@ -301,44 +317,32 @@ class WeatherApp {
                             <div class="description">${city.today?.description ?? 'Загрузка...'}</div>
                             <div class="date">Сегодня</div>
                         </div>
-                        ${city.days
-                            ?.map(
-                                d => `
+                        ${city.days?.map(d => `
                             <div class="forecast-day">
                                 <div class="day-icon">❄️</div>
                                 <div class="temp">${d.temp_min}° / ${d.temp_max}°</div>
                                 <div class="description">${d.description}</div>
                                 <div class="date">${this.formatDate(d.date)}</div>
-                            </div>`
-                            )
-                            .join('') || ''}
+                            </div>`).join('') || ''}
                     </div>
                 </div>
-            </div>`
-            )
-            .join('');
+            </div>`).join('');
 
         container.innerHTML = `
             <div class="city-tabs">${tabsHtml}</div>
-            <div class="weather-section">
-                ${forecastsHtml}
-            </div>
+            <div class="weather-section">${forecastsHtml}</div>
         `;
 
-        // переключение вкладок
         document.querySelectorAll('.city-tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 const index = Number(tab.dataset.index);
                 document.querySelectorAll('.city-tab').forEach(t => t.classList.remove('active'));
                 document.querySelectorAll('.city-forecast').forEach(f => f.classList.add('hidden'));
                 tab.classList.add('active');
-                document
-                    .querySelector(`.city-forecast[data-city="${index}"]`)
-                    .classList.remove('hidden');
+                document.querySelector(`.city-forecast[data-city="${index}"]`).classList.remove('hidden');
             });
         });
 
-        // удаление городов
         document.querySelectorAll('.delete-city-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const index = Number(btn.dataset.index);
@@ -382,8 +386,6 @@ class WeatherApp {
         } else if (status === 'success') {
             el.textContent = '✅ Город добавлен';
             setTimeout(() => el.classList.add('hidden'), 1500);
-        } else if (status === 'error') {
-            // сообщение уже задано в showCityError
         }
     }
 
@@ -398,6 +400,5 @@ class WeatherApp {
     }
 }
 
-// запуск приложения
 const app = new WeatherApp();
 window.app = app;
