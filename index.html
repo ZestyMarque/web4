@@ -24,18 +24,22 @@
                 </div>
             </section>
 
-            <!-- Форма добавления города -->
             <section class="add-city-section">
                 <h3>✨ Добавить город</h3>
                 <div class="city-input-container">
-                    <input type="text" id="cityInput" placeholder="Введите название города (Москва, Paris...)" list="citySuggestions">
+                    <!-- ВАЖНО: list="citySuggestions" и datalist ниже -->
+                    <input
+                        type="text"
+                        id="cityInput"
+                        placeholder="Введите название города (Москва, Paris...)"
+                        list="citySuggestions"
+                    >
                     <datalist id="citySuggestions"></datalist>
                     <button id="addCityBtn">➕ Добавить</button>
                     <div id="cityError" class="error hidden"></div>
                 </div>
             </section>
 
-            <!-- Дополнительные города -->
             <section id="additionalCities" class="additional-cities">
                 <h3>🌍 Другие города</h3>
                 <div id="citiesList">
@@ -46,7 +50,6 @@
             </section>
         </main>
 
-        <!-- Новогодние снежинки -->
         <div class="snowflakes" aria-hidden="true">
             <div class="snowflake">❄️</div>
             <div class="snowflake">❄️</div>
