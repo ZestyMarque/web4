@@ -1,13 +1,10 @@
 class WeatherApp {
     constructor() {
-        // ТВОЙ КЛЮЧ OpenWeatherMap
         this.API_KEY = 'f6aec960f0fcbdc574a2f22da749dd5c';
         this.baseUrl = 'https://api.openweathermap.org/data/2.5';
 
         this.cities = JSON.parse(localStorage.getItem('weatherCities')) || [];
         this.currentLocation = JSON.parse(localStorage.getItem('currentLocation')) || null;
-        
-        // ✅ СПИСОК ГОРОДОВ ДЛЯ АВТОПОДБОРКИ (для задания)
         this.citySuggestions = [
             'Москва', 'Санкт-Петербург', 'Новосибирск', 'Екатеринбург', 'Казань',
             'Нижний Новгород', 'Челябинск', 'Самара', 'Омск', 'Ростов-на-Дону',
@@ -18,7 +15,6 @@ class WeatherApp {
         this.init();
     }
 
-    // ---------- ИНИЦИАЛИЗАЦИЯ ----------
 
     init() {
         this.bindEvents();
@@ -34,7 +30,6 @@ class WeatherApp {
         }
     }
 
-    // ✅ ОБНОВЛЁННЫЙ bindEvents С ПОДсказками
     bindEvents() {
         document.getElementById('refreshBtn').addEventListener('click', () => this.refreshAll());
         document.getElementById('addCityBtn').addEventListener('click', () => this.addCity());
@@ -42,13 +37,11 @@ class WeatherApp {
             if (e.key === 'Enter') this.addCity();
         });
         
-        // ✅ ВЫПАДАЮЩИЙ СПИСОК при вводе
         document.getElementById('cityInput').addEventListener('input', (e) => {
             this.showSuggestions(e.target.value);
         });
     }
 
-    // ✅ НОВЫЙ МЕТОД - ПОДсказки городов
     showSuggestions(query) {
         const datalist = document.getElementById('citySuggestions');
         datalist.innerHTML = ''; // очищаем предыдущие
@@ -67,7 +60,6 @@ class WeatherApp {
         });
     }
 
-    // ---------- ГЕОЛОКАЦИЯ / ПЕРВЫЙ ВХОД ----------
 
     requestGeolocation() {
         const status = document.getElementById('mainStatus');
@@ -128,8 +120,6 @@ class WeatherApp {
         await this.loadWeatherForCurrent();
     }
 
-    // ---------- ТЕКУЩЕЕ МЕСТОПОЛОЖЕНИЕ ----------
-
     async loadWeatherForCurrent() {
         this.setMainStatus('loading');
         try {
@@ -144,7 +134,6 @@ class WeatherApp {
         }
     }
 
-    // ---------- ГОРОДА: ДОБАВЛЕНИЕ / УДАЛЕНИЕ ----------
 
     async addCity() {
         const input = document.getElementById('cityInput');
@@ -183,7 +172,6 @@ class WeatherApp {
         this.renderCitiesList();
     }
 
-    // ---------- ОБНОВЛЕНИЕ ВСЕГО ----------
 
     async refreshAll() {
         this.setMainStatus('loading');
@@ -202,12 +190,9 @@ class WeatherApp {
             this.saveCities();
             this.renderCitiesList();
         } finally {
-            // Даже если были ошибки по отдельным городам, главный статус меняем
             this.setMainStatus('success');
         }
     }
-
-    // ---------- РАБОТА С API ----------
 
     async fetchWeatherForecast(location) {
         let url;
@@ -263,7 +248,6 @@ class WeatherApp {
         };
     }
 
-    // ---------- РЕНДЕР ----------
 
     renderMainForecast(data) {
         const titleEl = document.getElementById('mainTitle');
@@ -351,7 +335,6 @@ class WeatherApp {
         });
     }
 
-    // ---------- СТАТУСЫ / ВСПОМОГАТЕЛЬНЫЕ ----------
 
     setMainStatus(status) {
         const statusEl = document.getElementById('mainStatus');
