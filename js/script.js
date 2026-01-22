@@ -44,14 +44,14 @@ class WeatherApp {
 
     showSuggestions(query) {
         const datalist = document.getElementById('citySuggestions');
-        datalist.innerHTML = ''; // очищаем предыдущие
+        datalist.innerHTML = ''; 
 
         if (!query || query.length < 2) return;
 
-        // фильтруем города из списка
+        // фильтр города из списка
         const filtered = this.citySuggestions
             .filter(city => city.toLowerCase().includes(query.toLowerCase()))
-            .slice(0, 6); // максимум 6 подсказок
+            .slice(0, 6);
 
         filtered.forEach(city => {
             const option = document.createElement('option');
@@ -84,7 +84,7 @@ class WeatherApp {
             { timeout: 10000, enableHighAccuracy: true }
         );
     }
-
+    // ручной ввод
     showManualCityInput() {
         document.getElementById('mainTitle').textContent = 'Введите город';
         const status = document.getElementById('mainStatus');
@@ -214,7 +214,7 @@ class WeatherApp {
 
         return this.parseForecastData(data);
     }
-
+    // преобразование данных
     parseForecastData(apiData) {
         const city = apiData.city?.name || 'Неизвестный город';
 
@@ -274,6 +274,8 @@ class WeatherApp {
         `;
     }
 
+    // вкладки
+    
     renderCitiesList() {
         const container = document.getElementById('citiesList');
 
